@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameZone | Interactividad con JavaScript y el DOM</title>
+  <meta name="description" content="GameZone - Tienda de videojuegos, consolas y accesorios. Actividad Semana 5: manipulación del DOM, eventos (click, mouseover, submit) y Fetch API con manejo de promesas.">
+
+  <!-- Bootstrap 5.3.7 CSS (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+
+  <!-- Estilos propios: pequeños ajustes de marca sobre Bootstrap + estilos para la interactividad de la Semana 5 -->
+  <style>
+    :root {
+      --gz-acento: #38bdf8;
+    }
+
+    body {
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .navbar-brand span {
+      color: var(--gz-acento);
+    }
+
+    .carousel-item img {
+      width: 100%;
+      height: 60vh;
+      min-height: 260px;
+      max-height: 500px;
+      object-fit: cover;
+    }
+
+    .icono-beneficio {
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      background-color: rgba(56, 189, 248, 0.15);
+      color: var(--gz-acento);
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+    }
+
+    .card-img-top {
+      height: 200px;
+      object-fit: cover;
+    }
+
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid var(--gz-acento);
+      outline-offset: 2px;
+    }
+
+    .footer-gz {
+      background-color: #0b1120;
+    }
+
+    /* ---------- Semana 5: interactividad ---------- */
+
+    /* Posiciona la card en relativo para poder superponer la ficha técnica */
+    #contenedorCatalogo .card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Botón de favorito (corazón) sobre la imagen de cada card */
+    .btn-favorito {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      z-index: 2;
+      width: 2.5rem;
+      height: 2.5rem;
+      border: none;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.65);
+      color: #fff;
+      font-size: 1.25rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+
+    .btn-favorito:hover {
+      transform: scale(1.1);
+    }
+
+    .btn-favorito.activo {
+      background: #e11d48;
+    }
+
+    /* Ficha técnica que se agrega/quita dinámicamente al pasar el mouse (evento mouseover/mouseout) */
+    .ficha-tecnica {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 0.4rem 0.75rem;
+      background: rgba(15, 23, 42, 0.85);
+      color: #e2e8f0;
+      font-size: 0.8rem;
+      text-align: center;
+      animation: aparecer 0.15s ease-in;
+    }
+
+    @keyframes aparecer {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Contenedor de notificaciones "toast" creadas dinámicamente en JS */
+    #contenedorToasts {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 1080;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast-gz {
+      background: #16a34a;
+      color: #fff;
+      padding: 0.65rem 1rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      font-size: 0.9rem;
+      animation: aparecer 0.2s ease-out;
+    }
+
+    /* Tarjetas cargadas dinámicamente vía Fetch API */
+    .card-oferta img {
+      height: 160px;
+      object-fit: contain;
+      background: #fff;
+      padding: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+  <a class="visually-hidden-focusable" href="#contenido-principal">Saltar al contenido principal</a>
+
+  <!-- ==========================================================
+       NAVBAR
+       ========================================================== -->
+  <header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm" aria-label="Navegación principal">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="#contenido-principal">Game<span>Zone</span></a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarGameZone" aria-controls="navbarGameZone"
+                aria-expanded="false" aria-label="Mostrar u ocultar menú de navegación">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarGameZone">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="#inicio">Inicio</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#beneficios">Beneficios</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#catalogo">Catálogo</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#favoritos">
+                Favoritos
+                <span id="contadorFavoritos" class="badge rounded-pill bg-danger ms-1">0</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#ofertas-externas">Ofertas</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#contacto">Contacto</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main id="contenido-principal">
+
+    <!-- ==========================================================
+         CARRUSEL
+         ========================================================== -->
+    <section id="inicio" aria-label="Destacados de la tienda">
+      <div id="carruselGameZone" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+
+        <div class="carousel-indicators">
+          <button type="button" data-bs-target="#carruselGameZone" data-bs-slide-to="0"
+                  class="active" aria-current="true" aria-label="Diapositiva 1: Bienvenida"></button>
+          <button type="button" data-bs-target="#carruselGameZone" data-bs-slide-to="1"
+                  aria-label="Diapositiva 2: Envío gratis"></button>
+          <button type="button" data-bs-target="#carruselGameZone" data-bs-slide-to="2"
+                  aria-label="Diapositiva 3: Nuevos lanzamientos"></button>
+        </div>
+
+        <div class="carousel-inner">
+          <div class="carousel-item active">
+            <img src="img/banner1.jpg" class="d-block w-100" alt="Bienvenido a GameZone: consolas, juegos y accesorios para todos los gustos">
+          </div>
+          <div class="carousel-item">
+            <img src="img/banner2.jpg" class="d-block w-100" alt="Promoción de envío gratis en compras sobre $50.000 a todo Chile">
+          </div>
+          <div class="carousel-item">
+            <img src="img/banner3.jpg" class="d-block w-100" alt="Nuevos lanzamientos: descubre los títulos recién llegados a la tienda">
+          </div>
+        </div>
+
+        <button class="carousel-control-prev" type="button" data-bs-target="#carruselGameZone" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Anterior</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carruselGameZone" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Siguiente</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         GRID — ¿Por qué elegir GameZone?
+         ========================================================== -->
+    <section id="beneficios" class="py-5" aria-labelledby="beneficios-titulo">
+      <div class="container">
+        <h2 id="beneficios-titulo" class="text-center mb-5">¿Por qué elegir GameZone?</h2>
+        <div class="row g-4 text-center">
+          <div class="col-12 col-sm-6 col-lg-3">
+            <div class="icono-beneficio" aria-hidden="true">🚚</div>
+            <h3 class="h5">Envío rápido</h3>
+            <p class="text-secondary">Despacho a todo Chile en 24-48 horas hábiles.</p>
+          </div>
+          <div class="col-12 col-sm-6 col-lg-3">
+            <div class="icono-beneficio" aria-hidden="true">🔒</div>
+            <h3 class="h5">Pago seguro</h3>
+            <p class="text-secondary">Transacciones protegidas con los principales medios de pago.</p>
+          </div>
+          <div class="col-12 col-sm-6 col-lg-3">
+            <div class="icono-beneficio" aria-hidden="true">↩️</div>
+            <h3 class="h5">Devoluciones fáciles</h3>
+            <p class="text-secondary">30 días para cambios y devoluciones sin complicaciones.</p>
+          </div>
+          <div class="col-12 col-sm-6 col-lg-3">
+            <div class="icono-beneficio" aria-hidden="true">🎧</div>
+            <h3 class="h5">Soporte 24/7</h3>
+            <p class="text-secondary">Atención por chat y correo todos los días del año.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         CARDS — Catálogo destacado
+         Cada card incorpora un botón de favorito (♡) y datos técnicos
+         (data-genero / data-jugadores) que la Semana 5 usa para
+         demostrar manipulación del DOM y eventos click / mouseover.
+         ========================================================== -->
+    <section id="catalogo" class="py-5 bg-body-tertiary" aria-labelledby="catalogo-titulo">
+      <div class="container">
+        <h2 id="catalogo-titulo" class="text-center mb-2">Catálogo destacado</h2>
+        <p class="text-center text-secondary mb-5">Pasa el mouse sobre una portada para ver su ficha técnica, o haz clic en el ♡ para agregarla a tus favoritos.</p>
+
+        <div id="contenedorCatalogo" class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+
+          <div class="col">
+            <div class="card h-100 shadow-sm" data-id="1" data-nombre="Reinos Olvidados" data-precio="34990"
+                 data-genero="RPG de mundo abierto" data-jugadores="1 jugador">
+              <button type="button" class="btn-favorito" aria-pressed="false" aria-label="Agregar Reinos Olvidados a favoritos">♡</button>
+              <img src="img/juego1.jpg" class="card-img-top" alt="Portada del juego de rol Reinos Olvidados">
+              <div class="card-body d-flex flex-column">
+                <h3 class="h5 card-title">Reinos Olvidados</h3>
+                <p class="card-text text-secondary flex-grow-1">RPG de mundo abierto con horas de contenido y misiones secundarias.</p>
+                <p class="fw-bold mb-0">$34.990</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card h-100 shadow-sm" data-id="2" data-nombre="Velocidad Extrema" data-precio="29990"
+                 data-genero="Carreras arcade" data-jugadores="1-4 jugadores (local)">
+              <button type="button" class="btn-favorito" aria-pressed="false" aria-label="Agregar Velocidad Extrema a favoritos">♡</button>
+              <img src="img/juego2.jpg" class="card-img-top" alt="Portada del juego de carreras Velocidad Extrema">
+              <div class="card-body d-flex flex-column">
+                <h3 class="h5 card-title">Velocidad Extrema</h3>
+                <p class="card-text text-secondary flex-grow-1">Carreras arcade a toda velocidad con modo multijugador local.</p>
+                <p class="fw-bold mb-0">$29.990</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card h-100 shadow-sm" data-id="3" data-nombre="Sombra Silenciosa" data-precio="27990"
+                 data-genero="Sigilo / Aventura" data-jugadores="1 jugador">
+              <button type="button" class="btn-favorito" aria-pressed="false" aria-label="Agregar Sombra Silenciosa a favoritos">♡</button>
+              <img src="img/juego3.jpg" class="card-img-top" alt="Portada del juego de sigilo Sombra Silenciosa">
+              <div class="card-body d-flex flex-column">
+                <h3 class="h5 card-title">Sombra Silenciosa</h3>
+                <p class="card-text text-secondary flex-grow-1">Aventura de infiltración con una narrativa envolvente.</p>
+                <p class="fw-bold mb-0">$27.990</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card h-100 shadow-sm" data-id="4" data-nombre="Control Inalámbrico" data-precio="19990"
+                 data-genero="Accesorio" data-jugadores="Compatible multiplataforma">
+              <button type="button" class="btn-favorito" aria-pressed="false" aria-label="Agregar Control Inalámbrico a favoritos">♡</button>
+              <img src="img/control.jpg" class="card-img-top" alt="Control inalámbrico para consola">
+              <div class="card-body d-flex flex-column">
+                <h3 class="h5 card-title">Control Inalámbrico</h3>
+                <p class="card-text text-secondary flex-grow-1">Ergonómico, con batería de larga duración y compatibilidad múltiple.</p>
+                <p class="fw-bold mb-0">$19.990</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         MIS FAVORITOS — sección construida 100% por JavaScript
+         (createElement / appendChild) a partir de los clics en el
+         catálogo. Empieza vacía: el mensaje inicial también lo pone
+         el propio HTML como estado por defecto sin JavaScript.
+         ========================================================== -->
+    <section id="favoritos" class="py-5" aria-labelledby="favoritos-titulo">
+      <div class="container">
+        <h2 id="favoritos-titulo" class="text-center mb-2">Mis favoritos</h2>
+        <p class="text-center text-secondary mb-4">Se actualiza dinámicamente con JavaScript cada vez que agregas o quitas un producto.</p>
+        <ul id="listaFavoritos" class="list-group col-lg-6 mx-auto" aria-live="polite">
+          <li id="favoritosVacio" class="list-group-item text-center text-secondary">
+            Aún no has agregado favoritos. Haz clic en el ♡ de un producto del catálogo.
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         FETCH API — catálogo externo cargado dinámicamente
+         ========================================================== -->
+    <section id="ofertas-externas" class="py-5 bg-body-tertiary" aria-labelledby="ofertas-titulo">
+      <div class="container">
+        <h2 id="ofertas-titulo" class="text-center mb-2">Accesorios recomendados</h2>
+        <p class="text-center text-secondary mb-2">Catálogo externo cargado en tiempo real mediante <code>fetch()</code> desde una API pública.</p>
+        <p class="text-center text-secondary mb-5"><small>Fuente: <a class="link-light" href="https://fakestoreapi.com/" target="_blank" rel="noopener">Fake Store API</a> (categoría "electronics")</small></p>
+
+        <div id="ofertasEstado" class="text-center mb-4">
+          <div class="spinner-border text-info" role="status">
+            <span class="visually-hidden">Cargando ofertas externas…</span>
+          </div>
+        </div>
+
+        <div id="contenedorOfertas" class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
+          <!-- Bootstrap y el propio JS de esta sección llenan este contenedor dinámicamente -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         CONTACTO — formulario real con validación y evento submit
+         ========================================================== -->
+    <section id="contacto" class="py-5" aria-labelledby="contacto-titulo">
+      <div class="container">
+        <div class="row justify-content-center text-center">
+          <div class="col-lg-7">
+            <h2 id="contacto-titulo" class="mb-3">¿Tienes alguna consulta?</h2>
+            <p class="text-secondary mb-4">Completa el formulario y te responderemos a la brevedad.</p>
+
+            <form id="formContacto" novalidate>
+              <div class="row g-3 text-start">
+                <div class="col-md-6">
+                  <label for="nombreContacto" class="form-label">Nombre</label>
+                  <input type="text" class="form-control" id="nombreContacto" name="nombre" placeholder="Tu nombre" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="correoContacto" class="form-label">Correo electrónico</label>
+                  <input type="email" class="form-control" id="correoContacto" name="correo" placeholder="tucorreo@ejemplo.com" required>
+                </div>
+                <div class="col-12">
+                  <label for="mensajeContacto" class="form-label">Mensaje</label>
+                  <textarea class="form-control" id="mensajeContacto" name="mensaje" rows="3" placeholder="Cuéntanos en qué te ayudamos" required></textarea>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-primary btn-lg">Enviar mensaje</button>
+                </div>
+              </div>
+              <div id="feedbackContacto" class="mt-3" aria-live="polite"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================================
+       FOOTER
+       ========================================================== -->
+  <footer class="footer-gz text-light py-4">
+    <div class="container text-center">
+      <address class="mb-2">
+        GameZone · Av. Siempre Viva 123, Santiago, Chile · <a class="link-light" href="mailto:contacto@gamezone.cl">contacto@gamezone.cl</a>
+      </address>
+      <p class="mb-0 text-secondary small">&copy; 2026 GameZone. Actividad formativa Semana 5 — Desarrollo Frontend I (PFY2201).</p>
+    </div>
+  </footer>
+
+  <!-- Contenedor donde el JavaScript inserta notificaciones "toast" dinámicas -->
+  <div id="contenedorToasts"></div>
+
+  <!-- Bootstrap 5.3.7 JS Bundle (incluye Popper, requerido por navbar y carousel) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+
+  <!-- JavaScript propio de la Semana 5: manipulación del DOM, eventos y Fetch API -->
+  <script src="js/FernandoFuentes_PFY2201_DOM_Semana5.js"></script>
+</body>
+</html>
