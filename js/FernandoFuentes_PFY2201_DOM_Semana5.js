@@ -12,6 +12,9 @@
  *   2) Eventos                -> click, mouseover/mouseout y submit.
  *   3) Fetch API + promesas   -> catálogo externo de accesorios,
  *                                con manejo de errores y reintento.
+ *   4) Accesibilidad          -> el carrusel se pausa también al
+ *                                recibir foco de teclado (Bootstrap
+ *                                solo lo hace por defecto con hover).
  *
  * Convención de código: cada bloque de funcionalidad se inicializa
  * desde init(), que se ejecuta una sola vez cuando el DOM está listo.
@@ -33,6 +36,48 @@ function init() {
   initFichaTecnica();
   initFormularioContacto();
   cargarOfertasExternas();
+  initPausaCarruselAccesible();
+}
+
+/* =================================================================
+   0. ACCESIBILIDAD DEL CARRUSEL
+   El carrusel avanza solo cada 3 segundos (data-bs-interval="3000"),
+   lo que puede ser un problema para una persona que necesita más
+   tiempo para leer el texto de cada diapositiva o que la explora
+   con el teclado: si el contenido sigue cambiando mientras aún no
+   termina de leerlo, la experiencia se vuelve difícil o frustrante
+   (criterio de accesibilidad "Pausa, detención u ocultación").
+   Bootstrap ya pausa el carrusel al pasar el mouse por encima
+   (data-bs-pause="hover", su valor por defecto), pero NO lo pausa
+   automáticamente cuando un elemento recibe el foco del teclado.
+   Esta función cierra ese vacío: al tabular hacia los controles o
+   los indicadores del carrusel se pausa igual que con el mouse, y
+   se reanuda solo cuando el foco sale por completo del carrusel.
+   ================================================================= */
+
+function initPausaCarruselAccesible() {
+  const carrusel = document.getElementById('carruselGameZone');
+  if (!carrusel) return;
+
+  // Se obtiene (o crea) la instancia de Carousel que Bootstrap ya
+  // inicializó automáticamente gracias a data-bs-ride="carousel".
+  const instancia = bootstrap.Carousel.getOrCreateInstance(carrusel);
+
+  carrusel.addEventListener('focusin', () => {
+    instancia.pause();
+    carrusel.classList.add('en-pausa');
+  });
+
+  carrusel.addEventListener('focusout', (evento) => {
+    // focusout se dispara también al mover el foco ENTRE elementos
+    // internos del carrusel (por ejemplo, de un indicador al botón
+    // "Siguiente"); solo se debe reanudar cuando el foco sale por
+    // completo del carrusel.
+    if (carrusel.contains(evento.relatedTarget)) return;
+
+    instancia.cycle();
+    carrusel.classList.remove('en-pausa');
+  });
 }
 
 /* =================================================================

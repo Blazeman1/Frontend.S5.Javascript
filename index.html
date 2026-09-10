@@ -10,143 +10,10 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
 
-  <!-- Estilos propios: pequeños ajustes de marca sobre Bootstrap + estilos para la interactividad de la Semana 5 -->
-  <style>
-    :root {
-      --gz-acento: #38bdf8;
-    }
-
-    body {
-      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    .navbar-brand span {
-      color: var(--gz-acento);
-    }
-
-    .carousel-item img {
-      width: 100%;
-      height: 60vh;
-      min-height: 260px;
-      max-height: 500px;
-      object-fit: cover;
-    }
-
-    .icono-beneficio {
-      width: 64px;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      background-color: rgba(56, 189, 248, 0.15);
-      color: var(--gz-acento);
-      border-radius: 50%;
-      margin: 0 auto 1rem;
-    }
-
-    .card-img-top {
-      height: 200px;
-      object-fit: cover;
-    }
-
-    a:focus-visible,
-    button:focus-visible,
-    input:focus-visible,
-    textarea:focus-visible {
-      outline: 3px solid var(--gz-acento);
-      outline-offset: 2px;
-    }
-
-    .footer-gz {
-      background-color: #0b1120;
-    }
-
-    /* ---------- Semana 5: interactividad ---------- */
-
-    /* Posiciona la card en relativo para poder superponer la ficha técnica */
-    #contenedorCatalogo .card {
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Botón de favorito (corazón) sobre la imagen de cada card */
-    .btn-favorito {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      z-index: 2;
-      width: 2.5rem;
-      height: 2.5rem;
-      border: none;
-      border-radius: 50%;
-      background: rgba(15, 23, 42, 0.65);
-      color: #fff;
-      font-size: 1.25rem;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.15s ease, background-color 0.15s ease;
-    }
-
-    .btn-favorito:hover {
-      transform: scale(1.1);
-    }
-
-    .btn-favorito.activo {
-      background: #e11d48;
-    }
-
-    /* Ficha técnica que se agrega/quita dinámicamente al pasar el mouse (evento mouseover/mouseout) */
-    .ficha-tecnica {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      padding: 0.4rem 0.75rem;
-      background: rgba(15, 23, 42, 0.85);
-      color: #e2e8f0;
-      font-size: 0.8rem;
-      text-align: center;
-      animation: aparecer 0.15s ease-in;
-    }
-
-    @keyframes aparecer {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Contenedor de notificaciones "toast" creadas dinámicamente en JS */
-    #contenedorToasts {
-      position: fixed;
-      bottom: 1rem;
-      right: 1rem;
-      z-index: 1080;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .toast-gz {
-      background: #16a34a;
-      color: #fff;
-      padding: 0.65rem 1rem;
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      font-size: 0.9rem;
-      animation: aparecer 0.2s ease-out;
-    }
-
-    /* Tarjetas cargadas dinámicamente vía Fetch API */
-    .card-oferta img {
-      height: 160px;
-      object-fit: contain;
-      background: #fff;
-      padding: 0.75rem;
-    }
-  </style>
+  <!-- Estilos propios: pequeños ajustes de marca sobre Bootstrap + estilos para la interactividad de la Semana 5.
+       Se cargan como archivo externo (en vez de <style> incrustado) para separar estructura y presentación,
+       facilitar el mantenimiento y permitir que el navegador lo guarde en caché de forma independiente. -->
+  <link rel="stylesheet" href="css/FernandoFuentes_PFY2201_DOM_Semana5.css">
 </head>
 <body>
 
@@ -201,7 +68,11 @@
          CARRUSEL
          ========================================================== -->
     <section id="inicio" aria-label="Destacados de la tienda">
-      <div id="carruselGameZone" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+      <!-- data-bs-pause="hover" es el valor por defecto de Bootstrap (pausa con el mouse encima).
+           El foco de teclado NO lo cubre Bootstrap por defecto: ese comportamiento se agrega en
+           FernandoFuentes_PFY2201_DOM_Semana5.js (initPausaCarruselAccesible) para que una persona
+           que navega con Tab también pueda detener el avance automático mientras explora o lee. -->
+      <div id="carruselGameZone" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000" data-bs-pause="hover">
 
         <div class="carousel-indicators">
           <button type="button" data-bs-target="#carruselGameZone" data-bs-slide-to="0"
